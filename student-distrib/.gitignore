@@ -1,0 +1,7 @@
+*.o
+Makefile.dep
+cifs*
+*~
+compile_flags.txt
+bootimg
+mp3.img

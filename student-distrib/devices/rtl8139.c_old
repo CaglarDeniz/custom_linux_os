@@ -1,0 +1,184 @@
+#include "rtl8139.h"
+#include "pci.h"
+#include "../i8259.h"
+#include "../paging.h"
+#include "../networking/networking.h"
+
+#define VENDOR_ID 0x10ec
+#define DEVICE_ID 0x8139
+
+#define ENABLE_BUS_MASTERING 4
+
+#define CR9346  0x50
+#define CONFIG1 0x52
+#define COMMAND 0x37
+#define COMMAND_RESET 0x10
+#define COMMAND_RE 0x08
+#define COMMAND_TE 0x04
+#define COMMAND_BUFE 0x01
+#define RBSTART 0x30
+#define IMR 0x3C
+#define ISR 0x3E
+#define Rx_OK 0x01
+#define Tx_OK 0x04
+#define RBR 0x44
+// accept all
+#define RBR_AAP 0x01
+// accept match
+#define RBR_APM 0x02
+// accept multicast
+#define RBR_AM 0x04
+// accept broadcast
+#define RBR_AB 0x08
+#define RBR_WRAP 0x80
+#define TX_START 0x20
+#define TX_CTL 0x10
+#define CAPR 0x38
+#define CBR 0x3A
+#define MAC 0x0
+#define TCR 0x40
+#define TCR_LBK 0x60000
+
+static pci_device_t device;
+static uint8_t rx_buffer[8192+16+1500]; // 8K + 16 + 1500 byte recieve buffer
+static uint8_t tx_buffer[1518];
+static volatile uint8_t can_send = 0;
+static uint8_t counter = 0;
+
+// TODO
+static uint8_t in(uint32_t port) {
+  return inb(device.bar_addr[0]+port);
+}
+
+// TODO
+static void out(uint32_t port, uint8_t data) {
+  outb(data, device.bar_addr[0]+port);
+}
+
+// TODO
+static uint32_t in_long(uint32_t port) {
+  return inl(device.bar_addr[0]+port);
+}
+
+// TODO
+static void out_long(uint32_t port, uint32_t data) {
+  outl(data, device.bar_addr[0]+port);
+}
+
+// TODO
+static uint16_t in_short(uint32_t port) {
+  return inw(device.bar_addr[0]+port);
+}
+
+// TODO
+static void out_short(uint32_t port, uint16_t data) {
+  outw(data, device.bar_addr[0]+port);
+}
+
+// TODO
+static void interrupt_handler(void) {
+  uint16_t status = in_short(ISR);
+  printf("ISR: %b%b\n", (status>>8)&0xFF, status&0xFF);
+  if (status & Rx_OK) {
+    printf("Recieved something\n");
+
+    // Clear interrupt
+    out_short(ISR, Rx_OK);
+  }
+  if (status & Tx_OK) {
+    printf("Sent something lol\n");
+    // Clear interrupt
+    can_send = 1;
+    out_short(ISR, Tx_OK);
+  }
+}
+
+// TODO
+int send_packet(uint8_t* packet, uint32_t size) {
+  if (size > 1518) return -1; // maximum ethernet II frame size
+
+  // Wait to send (TODO actually use all four things)
+  while (!can_send);
+  can_send = 0;
+
+  memcpy((int8_t*)tx_buffer, (int8_t*)packet, size);
+
+  // Set start address
+  out_long(TX_START + 4*counter, get_physical_addr((uint32_t)tx_buffer));
+
+  // Start operation
+  out_long(TX_CTL + 4*counter, size);
+
+  counter = (counter+1)%4;
+
+  /*while(1) {
+    size = in_long(TX_CTL);
+  }*/
+
+  return 0;
+}
+
+uint8_t get_b(uint32_t b) {
+  return in(b);
+}
+
+uint16_t get_s(uint32_t b) {
+  return in_short(b);
+}
+
+uint32_t get_l(uint32_t b) {
+  return in_long(b);
+}
+
+// TODO
+int rtl8139_init(void) {
+  uint32_t i;
+  find_device(&device, VENDOR_ID, DEVICE_ID);
+
+  if (device.device_id != DEVICE_ID) return -1;
+
+  // Enable bus mastering
+  device.command |= ENABLE_BUS_MASTERING;
+  pci_update(&device, PCI_COMMAND_OFFSET);
+
+  // Turn on device
+  out(CONFIG1, 0);
+
+  // Reset device
+  out(COMMAND, COMMAND_RESET);
+  printf("Waoijeg\n");
+  while (in(COMMAND) & COMMAND_RESET) {
+    printf("Waiting\n");
+  }
+
+  // Initialize recieve buffer
+  out_long(RBSTART, (uint32_t)rx_buffer);
+  printf("%x\n", in_long(RBSTART));
+
+  // Initialize interrupts
+  out_short(IMR, Rx_OK | Tx_OK | 0x08 | 0x02);
+
+  // Configure recieve buffer
+  out_long(RBR, RBR_AAP | RBR_AB | RBR_AM | RBR_APM | RBR_WRAP);
+
+  // Enable transmitting/receiving packets
+  out(COMMAND, COMMAND_RE | COMMAND_TE);
+
+  // Enable loopback
+  //out_long(TCR, in_long(TCR) | TCR_LBK);
+
+  // Register interrupt handler
+  printf("Handler registered on line %d\n", device.int_line);
+  register_interrupt_handler(device.int_line, interrupt_handler);
+
+  // Initialize variables
+  can_send = 1;
+  counter = 0;
+
+  // lol
+  for (i = 0; i < 6; i++) {
+    mac.v[i] = in(MAC+i);
+  }
+
+  return 0;
+}
