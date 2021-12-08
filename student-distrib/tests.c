@@ -848,7 +848,7 @@ void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test(), &failed_count);
 	TEST_OUTPUT("exceptions_test", exceptions_test(), &failed_count);
 	TEST_OUTPUT("paging_test", paging_test(), &failed_count);
-	TEST_OUTPUT("filesystem_test", filesystem_test(), &failed_count);
+//	TEST_OUTPUT("filesystem_test", filesystem_test(), &failed_count);
 	//TEST_OUTPUT("directory_read_test", directory_read_test(), &failed_count);
 	//TEST_OUTPUT("arbitrary_file_read_test", arbitrary_file_read_test(), &failed_count);
 	//TEST_OUTPUT("terminal_driver_test", terminal_driver_test(), &failed_count);

@@ -20,10 +20,6 @@ int main ()
       return 3;
     }
 
-    ece391_fdputs(1, (uint8_t*)"removing file: ");
-    ece391_fdputs(1, file);
-    ece391_fdputs(1, (uint8_t*)"\n");
-
     if (-1 == (ece391_unlink(file))) {
       ece391_fdputs (1, (uint8_t*)"file not found\n");
 	    return 2;
