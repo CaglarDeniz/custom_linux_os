@@ -32,10 +32,51 @@ int32_t file_close(int32_t fd) {
  *			buf - buffer of string to write to the file
  *			nbytes - number of bytes in the string to write
  * Return Value: 0 for success, -1 for failure
- * Function: Does nothing, always fails since it is not supported
+ * Function: Appends buf to the end of a file
  */
 int32_t file_write(int32_t fd, const void* buf, int32_t nbytes) {
-    return -1; // TODO not yet supported
+  inode_t* curr_inode;
+  uint32_t data_block_count, data_addr, i, remaining_data, j;
+
+  curr_inode = &inode_base[fd_table[fd].inode_num];
+
+  if(curr_inode->length != 0) {
+	// (1) free all data blocks
+	data_block_count = (curr_inode->length / FOUR_KB) + 1;
+	for(i = 0; i < data_block_count; ++i) {
+	  data_block_bitmap[curr_inode->data_blocks[i]] = 0;
+	}
+  }
+
+  curr_inode->length = nbytes;
+  /*
+  for(i = 15; i < NUM_DATA_BLOCK_ADDR; ++i) {
+	if(!data_block_bitmap[i]) break;
+  }
+  curr_inode->data_blocks[0] = i;
+
+  // Get addr to start copying into
+  data_addr = &data_base[curr_inode->data_blocks[0]];
+  // Add data until end of current data block
+  memcpy(data_addr, buf, nbytes);*/
+
+  remaining_data = nbytes;
+  for(i = 0; i < data_block_count; ++i) {
+	for(j = 15; j < NUM_DATA_BLOCK_ADDR; ++j) {
+	  if(!data_block_bitmap[j]) break;
+	}
+	curr_inode->data_blocks[i] = j;
+	data_addr = &data_base[curr_inode->data_blocks[i]];
+	if(remaining_data <= FOUR_KB) {
+	  memcpy(data_addr, buf, remaining_data);
+	  break;
+	}
+
+	buf += FOUR_KB;
+	remaining_data -= FOUR_KB;
+  }
+
+  return 0;
 }
 
 /* int32_t file_read(int32_t fd, void* buf, int32_t nbytes);

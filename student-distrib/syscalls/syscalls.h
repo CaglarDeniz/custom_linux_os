@@ -22,6 +22,8 @@ int32_t getargs(uint8_t* buf, int32_t nbytes);
 int32_t vidmap(uint8_t** screen_start);
 int32_t set_handler(int32_t signum, void* handler_address);
 int32_t sigreturn(void);
+int32_t creat(const uint8_t* filename);
+int32_t unlink(const uint8_t* filename);
 void setup_fdtable(fd_t* fd_table);
 int32_t syscall_shim(int32_t b, int32_t c, int32_t d, int32_t a);
 

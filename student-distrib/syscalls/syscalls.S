@@ -1,5 +1,5 @@
 # global declarations for syscall table 
-.globl halt , execute , read , write , open , close , getargs, vidmap , set_handler , sigreturn , syscall_handler
+.globl halt , execute , read , write , open , close , getargs, vidmap , set_handler , sigreturn , creat, unlink, syscall_handler
 .globl syscall_shim
 
 # 
@@ -51,6 +51,8 @@ syscall_table:
 .long vidmap # vidmap
 .long 0x0 # set_handler
 .long 0x0 # sigreturn
+.long creat
+.long unlink
 
 
 

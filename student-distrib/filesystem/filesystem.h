@@ -28,6 +28,10 @@ fd_t kernel_fd_table[MAX_OPEN_FILES]; /* Block of memory allocated for file desc
 /* Boot block, which also acts as our root directory */
 boot_block_t root;
 
+/* Bitmaps for filesystem contents */
+unsigned long long inode_bitmap;
+uint8_t data_block_bitmap[NUM_DATA_BLOCK_ADDR];
+
 /* Initializes the filesystem using base_addr as the base 
  * 	physical address of the filesystem image in memory */
 void filesystem_init(unsigned int base_addr);
@@ -60,6 +64,9 @@ int32_t directory_open(const uint8_t* filename);						/* Opens a directory */
 int32_t directory_close(int32_t fd);									/* Closes a directory */
 int32_t directory_write(int32_t fd, const void* buf, int32_t nbytes);	/* Writes to a directory (TODO does nothing) */
 int32_t directory_read(int32_t fd, void* buf, int32_t nbytes);			/* Reads a file name from a directory */
+
+int32_t new_dentry(const uint8_t* fname); // write to directory
+int32_t remove_dentry(const uint8_t* fname); // write to directory
 
 /* File operations table for directories */
 extern file_ops_t file_ops_dir;

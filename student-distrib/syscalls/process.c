@@ -169,7 +169,7 @@ hw_context_t* do_irq_main(hw_context_t *context) {
 		((void(*)(hw_context_t*))exception_handlers[context->irq_num])(context);
 	} else if (context->irq_num == 0x80) {
 		// syscall
-		if ((context->eax < 1) || (context->eax > 8)) { // TODO signals
+		if ((context->eax < 1) || (context->eax > 14)) { // TODO signals
 			context->eax = -1; // return -1
 		} else {
 			context->eax = syscall_shim(context->ebx, context->ecx, context->edx, context->eax);
