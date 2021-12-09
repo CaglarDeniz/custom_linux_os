@@ -23,6 +23,8 @@
 static uint8_t caret = 0;
 static uint8_t* video_mem = (uint8_t *)VIDEO;
 
+static uint8_t attrib = 0x5;
+
 static int screen_x;
 static int screen_y;
 static char* input_buffer;
@@ -54,7 +56,7 @@ void scroll(void) {
     // Clear last row
     for (; i < NUM_ROWS * NUM_COLS; i++) {
         *(video_mem + (i << 1)) = ' ';
-        *(video_mem + (i << 1) + 1) = ATTRIB;
+        *(video_mem + (i << 1) + 1) = attrib;
     }
 }
 
@@ -137,11 +139,15 @@ uint8_t tty_putc(uint8_t c) {
  */
 uint8_t tty_putc_nocursor(uint8_t c) {
     uint8_t n = 1;
-    if ((c == '\n') || (c == '\r')) {
-        // '\n' and '\r' both move cursor down and left
+    if (c == '\n') {
+        // '\n' moves cursor down and left
         n = NUM_COLS-screen_x;
         screen_y++;
         screen_x = 0;
+    } else if (c == '\r') {
+        n = NUM_COLS-screen_x;
+        screen_x = 0;
+        if (caret) screen_y++;
     } else if (c == '\t') {
         // '\t' prints up to TAB_WIDTH spaces and at least 1
         tty_putc_nocursor(' ');
@@ -153,7 +159,7 @@ uint8_t tty_putc_nocursor(uint8_t c) {
         if (is_printable(c)) {
             // Video memory takes 2 bytes per character
             *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-            *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+            *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = attrib;
             screen_x++;
             // Wrap around cursor
             if (screen_x == NUM_COLS) {
@@ -166,7 +172,7 @@ uint8_t tty_putc_nocursor(uint8_t c) {
             tty_putc_nocursor(c ^ CARET);
         } else if (!caret && c) {
             *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-            *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+            *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = attrib;
             screen_x++;
             // Wrap around cursor
             if (screen_x == NUM_COLS) {
@@ -236,7 +242,7 @@ void tty_cls(void) {
     int in_shell = check_shell(); // lol
     for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         *(video_mem + (i << 1)) = ' ';
-        *(video_mem + (i << 1) + 1) = ATTRIB;
+        *(video_mem + (i << 1) + 1) = attrib;
     }
     screen_x = 0;
     screen_y = 0;
@@ -267,7 +273,7 @@ void tty_backspace(void) {
             }
             // clear position
             *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-            *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+            *(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = attrib;
         }
         // Set new cursor position
         set_cursor_default();
@@ -355,7 +361,7 @@ static void shift_buffer(uint8_t i) {
     }
 
     buffer_size = j;
-    
+    screens[process_screen].size_history[history_curr] = buffer_size;
     
 }
 
@@ -452,6 +458,7 @@ void save_data(void) {
     screens[process_screen].history_end = history_end;
     screens[process_screen].history_curr = history_curr;
     screens[process_screen].size_history[history_curr] = buffer_size;
+    screens[process_screen].attrib = attrib;
 }
 
 /*
@@ -471,6 +478,7 @@ void load_data(void) {
     buffer_size = screens[process_screen].size_history[history_curr];
     ready = screens[process_screen].ready;
     tab_ls = screens[process_screen].tab_ls;
+    attrib = screens[process_screen].attrib;
 }
 
 /*
@@ -481,6 +489,10 @@ void load_data(void) {
  */
 void tty_init(void) {
     // Makes static variables point to screens array
+    int i;
+    for (i = 0; i < MAX_SCREENS; ++i) {
+        screens[i].attrib = 0x5;
+    }
     load_data();
 }
 
@@ -699,4 +711,11 @@ void history_new(void) {
     history_curr = history_end;
     input_buffer = screens[process_screen].input_history[history_curr];
     buffer_size = screens[process_screen].size_history[history_curr];
+}
+
+// TODO
+uint8_t tty_set_attrib(uint8_t a) {
+    uint8_t b = attrib;
+    attrib = a;
+    return b;
 }

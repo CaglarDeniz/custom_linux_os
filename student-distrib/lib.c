@@ -524,3 +524,9 @@ int atoi(int8_t* s, int* num) {
     *num = n;
     return i;
 }
+
+// TODO
+uint32_t min(uint32_t a, uint32_t b) {
+    if (a < b) return a;
+    return b;
+}

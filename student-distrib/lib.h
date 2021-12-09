@@ -12,7 +12,7 @@
 /* Dimensions of Terminal */
 #define NUM_COLS    80
 #define NUM_ROWS    25
-#define ATTRIB      0x7
+#define ATTRIB      0x5
 
 #define FOUR_MB (1 << 22)
 #define FOUR_KB (1 << 12)
@@ -44,6 +44,7 @@ int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 
 /* TODO convenience? */
 void die(int8_t* s);
+uint32_t min(uint32_t a, uint32_t b);
 
 void test_interrupts(void);
 

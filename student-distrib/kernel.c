@@ -19,12 +19,17 @@
 #include "devices/pci.h"
 #include "networking/networking.h"
 #include "devices/e1000.h"
+#include "networking/http.h"
 
 #define RUN_TESTS
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
+
+static void test_rtc(uint32_t n) {
+    printf("LOL! %d\n", n);
+}
 
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
@@ -187,14 +192,76 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
 
-    // run "nc -ul 56565" on your machine to test
-    /*ip_t lol = {{10, 194, 248, 187}};//{{10, 0, 2, 2}};//{{10, 195, 198, 131}};//
+    /*// run "nc -ul 56565" on your machine to test
+    ip_t lol = {{10, 0, 2, 2}};//{{10, 194, 248, 187}};//{{10, 195, 198, 131}};//
     uint8_t blah[123];
     int8_t *message = "Type something bro: ";
 
     udp_send_packet(&lol, 56565, 57575, (uint8_t*)message, strlen(message));
     udp_recv(57575, blah, 123);
     printf("%s\n", blah);*/
+
+    /*ip_t blah;
+    uint8_t buffer[123];
+    printf("Enter a domain name: ");
+    int s = tty_read(0, buffer, 123);
+    if (s > 0) {
+        buffer[s-1] = '\0'; // /n
+        dns_query(buffer, &blah);
+        printf("Ip address is: ");
+        print_ip(&blah);
+    } else {
+        printf("Bad\n");
+    }*/
+
+    /*uint8_t buf[123];
+    int idx = tcp_connect("10.0.2.2", 56565);
+    int i;
+    char *message = "Type something bro: ";
+    if (idx > -1) {
+        tcp_sendall(idx, (uint8_t*)message, strlen(message));
+        i = tcp_recv(idx, buf, 5);
+        if (i > 0) buf[i] = '\0';
+        printf("Received '%s'\n", buf);
+    } else {
+        printf("Couldn't connect\n");
+    }*/
+    //char* buffer = "chrx.local";//[123];
+    //int s = strlen(buffer)+1;
+    char domain[123];
+    printf("Enter a domain name: ");
+    int s = tty_read(0, domain, 123);
+    if (s > 1) {
+        domain[s-1] = '\0';
+        int idx = http_get(domain, "/");
+        if (idx == -1) {
+            printf("Couldn't connect\n");
+        } else {
+            char buffer[1024+1];
+            while (http_recv(idx, buffer, 1024)) {
+                puts(buffer);
+            }
+        }
+        /*
+        int idx = tcp_connect(buffer, 80);
+        char *message = "GET / HTTP/1.0\r\n\r\n";
+        uint8_t buf[2049];
+        uint32_t i;
+        if (idx > -1) {
+            tcp_sendall(idx, (uint8_t*)message, strlen(message));
+            do {
+                i = tcp_recv(idx, buf, 2048);
+                if (i > 0) {
+                    buf[i] = '\0';
+                    puts((char*)buf);
+                }
+            } while (i > 0);
+        } else {
+            printf("Couldn't connect\n");
+        }*/
+    } else {
+        printf("Bad\n");
+    }
 
 	/* Run User shell */
 	// while(1) execute((uint8_t*) "shell");

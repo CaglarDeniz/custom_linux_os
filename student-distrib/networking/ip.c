@@ -1,13 +1,19 @@
 #include "networking.h"
 
 // TODO
-static uint16_t checksum(uint8_t* packet) {
-  uint32_t sum;
+uint16_t checksum(uint8_t* packet, uint32_t len) {
+  uint32_t sum = 0;
   uint32_t i;
-  uint16_t n;
-  for (i = 0; i < 10; i++) {
+  uint32_t n;
+  uint32_t len2 = len/2;
+  for (i = 0; i < len2; ++i) {
     n = read_u16(&packet);
-    //Tprintf("0x%x\n", n);
+    //printf("0x%x\n", n);
+    sum += n;
+  }
+  if (len%2) {
+    n = read_u8(&packet);
+    n <<= 8;
     sum += n;
   }
   while ((i = sum >> 16)) {
@@ -40,7 +46,7 @@ uint32_t ip_write_packet(const ip_t* dest, uint8_t protocol, uint8_t* packet, ui
   write_u16(0, &payload);//checksum (come back later)
   write_struct(ip_t, our_ip, &payload);
   write_struct(ip_t, *dest, &payload);
-  cs = checksum(start);
+  cs = checksum(start, IP_HEADER_LENGTH);
   //printf("0x%x\n", cs);
   write_u16(cs, &chksum);
   payload += payload_length;

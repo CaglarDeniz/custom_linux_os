@@ -136,6 +136,7 @@ int parse_ip(int8_t* s, ip_t *ip) {
   for (i = 0; i < 3; ++i) {
     s += atoi(s, &n);
     if (*s != '.') return -1;
+    s += 1;
     if (n < 0 || n > 255) return -1;
     ip->v[i] = n;
   }

@@ -28,6 +28,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes);
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 uint32_t rtc_wait(uint32_t duration_ms);
 uint32_t rtc_check(uint32_t stop);
+uint32_t rtc_register_handler(void(*function)(uint32_t), uint32_t arg, uint32_t wait);
 
 extern file_ops_t file_ops_rtc;
 

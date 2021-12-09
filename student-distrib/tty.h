@@ -32,6 +32,7 @@ void tab_complete(void);
 void history_up(void);
 void history_down(void);
 void history_new(void);
+uint8_t tty_set_attrib(uint8_t a);
 
 extern file_ops_t file_ops_tty;
 

@@ -10,6 +10,7 @@ typedef struct {
   uint8_t width_buffer[MAX_TERMINAL_BUF_SIZE];
   uint8_t ready;
   uint8_t tab_ls;
+  uint8_t attrib;
 
   char input_history[MAX_TERMINAL_HIST_LEN][MAX_TERMINAL_BUF_SIZE];
   uint8_t size_history[MAX_TERMINAL_HIST_LEN];

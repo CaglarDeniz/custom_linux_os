@@ -165,16 +165,22 @@ static uint16_t read_eeprom(uint8_t addr) {
 
 // TODO
 static void receive_packet(void) {
-    uint32_t counter = rx_counter;
-    rx_counter = (rx_counter + 1)%NUM_DESCS;
-    // (order doesn't really matter, because we only take one interrupt at a time)
-    if (rx_descs[counter].status_DD && rx_descs[counter].status_EOP) {
-        parse_packet((uint8_t*)rx_descs[counter].addr_low);
-    } else {
-        die("Long packet I guess?\n");
+    uint32_t counter;
+    while (1) {
+        counter = rx_counter;
+        rx_counter = (rx_counter + 1)%NUM_DESCS;
+        // (order doesn't really matter, because we only take one interrupt at a time)
+        if (rx_descs[counter].status_DD && rx_descs[counter].status_EOP) {
+            //printf("Parsing packet\n");
+            parse_packet((uint8_t*)rx_descs[counter].addr_low);
+            rx_descs[counter].status_DD = 0;
+        } else {
+            rx_counter = counter;
+            return;
+        }
+        // update RDTAIL
+        out(REG_RDTAIL, counter);
     }
-    // update RDTAIL
-    out(REG_RDTAIL, counter);
 }
 
 // TODO

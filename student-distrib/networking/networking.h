@@ -52,6 +52,7 @@ int arp_init(void);
 /* In ip.c */
 uint32_t ip_write_packet(const ip_t* dest, uint8_t protocol, uint8_t* packet, uint32_t payload_length);
 void ip_parse_packet(uint8_t* packet);
+uint16_t checksum(uint8_t* packet, uint32_t len);
 
 #define IP_HEADER_LENGTH 20
 #define IP_HEADER_OFFSET (ETHERNET_HEADER_LENGTH + IP_HEADER_LENGTH)
@@ -77,6 +78,11 @@ int dns_query(uint8_t* name, ip_t* ip);
 
 /* In tcp.c */
 void tcp_parse_packet(uint8_t* packet, uint32_t len);
+int tcp_connect(int8_t* domain, uint16_t port);
+uint32_t tcp_send(uint32_t idx, uint8_t* data, uint32_t len);
+uint32_t tcp_recv(uint32_t idx, uint8_t* buffer, uint32_t len);
+int tcp_sendall(uint32_t idx, uint8_t* data, uint32_t len);
+int tcp_recvall(uint32_t idx, uint8_t* buffer, uint32_t len);
 
 #define TCP_HEADER_LENGTH 20
 #define TCP_HEADER_OFFSET (IP_HEADER_OFFSET + UDP_HEADER_LENGTH)

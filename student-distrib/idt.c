@@ -340,6 +340,7 @@ static void general_protection_fault_handler(hw_context_t* context) {
 static void page_fault_handler(hw_context_t* context) {
   printf("0x0E: Page Fault\n");
   printf("EIP: 0x%x\n", context->ret);
+  die("");
   halt(0);
 }
 

@@ -15,6 +15,16 @@ static int32_t get_new_freq(const void* buf);
 
 static uint32_t counter = 0;
 
+typedef struct handler {
+  void(*function)(uint32_t);
+  uint32_t time;
+  uint32_t arg;
+} handler_t;
+
+handler_t handlers[256];
+uint32_t num_handlers = 0;
+
+
 /*
  * rtc_init
  *    DESCRIPTION: Initializes the RTC at IRQ 8
@@ -49,6 +59,14 @@ void rtc_init() {
  */
 static void rtc_handler() {
   ++counter;
+
+  int i;
+  for (i = 0; i < num_handlers; ++i) {
+    if (handlers[i].time < counter) {
+      handlers[i].function(handlers[i].arg);
+      handlers[i--] = handlers[--num_handlers];
+    }
+  }
 
   // Need to read data or it won't unmask
   outb(REG_C, RTC_REG);
@@ -139,4 +157,14 @@ uint32_t rtc_wait(uint32_t duration_ms) {
 // TODO
 uint32_t rtc_check(uint32_t stop) {
   return stop > counter;
+}
+
+// TODO
+uint32_t rtc_register_handler(void(*function)(uint32_t), uint32_t arg, uint32_t wait) {
+  int n = num_handlers++;
+  int t = rtc_wait(wait);
+  handlers[n].function = function;
+  handlers[n].arg = arg;
+  handlers[n].time = t;
+  return t;
 }
